@@ -1,0 +1,56 @@
+ 
+# -------------------------------------------------------------------
+# - DOCKER COMPOSE FILE
+# - AUTOR: wortiz
+# - FECHA: 07-Enero-2022
+# - DESCRIPCION: Docker compose file que permite la
+# -              creacion de los contenedores para la applicacion
+# -              keycloak                 
+# -------------------------------------------------------------------
+
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:${KEY_MYSQL_IMAGE_VERSION}
+    container_name: db_keycloak
+    hostname: db_keycloak
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${KEY_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${KEY_MYSQL_DATABASE}
+      MYSQL_USER: ${KEY_MYSQL_USERNAME}
+      MYSQL_PASSWORD: ${KEY_MYSQL_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - '33062:3306'
+    volumes:
+      - MYSQL_DATA_KEYCLOAK:/var/lib/mysql
+    networks:
+      - ntw_keycloak
+  keycloak:
+    image: jboss/keycloak:${KEY_KEYCLOAK_VERSION}
+    container_name: sv_keycloak
+    hostname: sv_keycloak
+    restart: unless-stopped
+    depends_on: 
+      - mysql
+    environment:
+      DB_VENDOR: MYSQL
+      DB_ADDR: mysql
+      DB_DATABASE: ${KEY_MYSQL_DATABASE}
+      DB_USER: ${KEY_MYSQL_USERNAME}
+      DB_PASSWORD: ${KEY_MYSQL_PASSWORD}
+      KEYCLOAK_USER: ${KEY_KEYCLOAK_USERNAME}
+      KEYCLOAK_PASSWORD: ${KEY_KEYCLOAK_PASSWORD}
+    ports:
+      - '28080:8080'
+    networks:
+      - ntw_keycloak
+
+volumes:
+  MYSQL_DATA_KEYCLOAK:
+
+networks:
+  ntw_keycloak:
+    external: true      

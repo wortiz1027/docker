@@ -1,0 +1,10 @@
+version: '3.7'
+
+service:
+  certbot:
+    image: certbot/certbot:latest
+     command: certonly --standalone --preferred-challenges http -d developer.io
+     volumes:
+       - ./certbot/conf/:/etc/letsencrypt
+       - ./certbot/logs/:/var/log/letsencrypt
+       - ./certbot/data:/usr/share/nginx/html/letsencrypt

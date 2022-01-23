@@ -1,0 +1,53 @@
+# -------------------------------------------------------------------
+# - DOCKER COMPOSE FILE
+# - AUTOR: wortiz
+# - FECHA: 07-Enero-2022
+# - DESCRIPCION: Docker compose file que permite la
+# -              creacion de contenedor con la db de employees
+# -------------------------------------------------------------------
+
+version: '3.8'
+
+services:
+  dev_employees:
+    image: mysql:8.0.27
+    container_name: dev_employees
+    hostname: dev_employees
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mysql'
+      MYSQL_DATABASE: 'employees'
+      MYSQL_USER: 'employees'
+      MYSQL_PASSWORD: 'a56e7535-fde4-419b-8556-fd6736e22254'
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - '33060:3306'
+    volumes:
+      - ./scripts/employees.sql:/docker-entrypoint-initdb.d/employees.sql
+      - MYSQL_DATA_DEV:/var/lib/mysql
+    networks:
+      - ntw_development
+  prd_employees:
+    image: mysql:8.0.27
+    container_name: prd_employees
+    hostname: prd_employees
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mysql'
+      MYSQL_DATABASE: 'employees'
+      MYSQL_USER: 'employees'
+      MYSQL_PASSWORD: '602e4e83-cdc2-4d78-8664-2a7331e205f0'
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - '33061:3306'
+    volumes:
+      - ./scripts/employees.sql:/docker-entrypoint-initdb.d/employees.sql
+      - MYSQL_DATA_PRD:/var/lib/mysql
+    networks:
+      - ntw_development
+volumes:
+  MYSQL_DATA_DEV:
+  MYSQL_DATA_PRD:
+networks:
+  ntw_development:
+    external: true

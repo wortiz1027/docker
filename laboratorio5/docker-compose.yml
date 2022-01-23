@@ -1,0 +1,76 @@
+# --------------------------------------------------------------
+# - DOCKER COMPOSE FILE
+# - AUTOR: Wilman Alberto Ortiz Navarro
+# - FECHA: 21-Octubre-2019
+# - DESCRIPCION: Docker compose file que permite la
+# -              creacion de 3 contendores uno de base de datos
+# -              oracle 12cR2, otro con el admin server y otro 
+# -              con la Soa suite 12.2.1.3
+# --------------------------------------------------------------
+
+# --------------------------------------------------------------
+# - https://container-registry.oracle.com
+# - https://technology.amis.nl/2018/05/17/soa-suite-12c-in-docker-containers-only-a-couple-of-commands-no-installers-no-third-party-scripts/
+# - https://hub.docker.com/u/wortiz1027/content/sub-68fc0ee8-59c5-42e6-bef1-d5e275e71468
+# - https://hub.docker.com/u/wortiz1027/content/sub-1fabccb7-e913-4d00-b711-1520bd76732b
+# - https://devhints.io/docker-compose
+# - https://community.oracle.com/blogs/mnemonic
+# - https://salsa.debian.org/debian/wait-for-it
+# --------------------------------------------------------------
+
+version: '3.7'
+services:
+    soadb:
+        container_name: soadb
+        image: container-registry.oracle.com/database/enterprise:12.2.0.1
+        hostname: soadb
+        env_file:
+            - ./conf/database/db.env.list
+        ports:
+            - 1521:1521
+        volumes:
+            - vlm_database:/opt/oracle/oradata
+        networks:
+            - SOANet
+        healthcheck:
+            test: ["CMD-SHELL", "su - oracle -c 'tnsping localhost:1521'"]
+            interval: 1s
+            timeout: 20s
+            retries: 10
+    soaas:
+        image: container-registry.oracle.com/middleware/soasuite:12.2.1.3-200418
+        container_name: soaas
+        hostname: soaas
+        restart: always
+        env_file:
+            - ./conf/soa/adminserver.env.list
+        ports:
+            - 7001:7001
+            - 9001:9001
+            - 9002:9002
+        volumes:
+            - vlm_soa:/u01/oracle/user_projects
+        networks:            
+            - SOANet
+        depends_on:
+           - soadb
+        healthcheck:
+            test: wget -qO- http://localhost:7001/em > /dev/null
+            interval: 5s
+            retries: 5
+volumes:
+  vlm_database:
+    driver: local
+    driver_opts :
+        type: 'none'
+        o: 'bind'
+        device: /scratch/DockerVolume/SOAVolume/DB/
+  vlm_soa:
+    driver: local
+    driver_opts:
+        type: 'none'
+        o: 'bind'
+        device: /u01/DockerVolume/SOAVolume/SOA
+networks:
+  SOANet:
+    external: true

@@ -1,0 +1,99 @@
+version: '3.7'
+services:
+    database:
+        image: postgres
+        container_name: server_sonar_postgres
+        hostname: server_sonar_postgres
+        restart: unless-stopped
+        environment:
+            - POSTGRES_USER=sonar
+            - POSTGRES_PASSWORD=sonar
+            - POSTGRES_DB=sonar
+        volumes:
+            - postgres:/var/lib/postgres
+            - db_data:/var/lib/postgres/data
+        networks:
+            - devnet
+    sonarqube:
+        image: sonarqube:lts
+        container_name: server_sonarqube
+        hostname: server_sonarqube
+        restart: unless-stopped
+        ports:
+            - 9000:9000
+            - 9092:9092
+        #environment:
+        #    - SONARQUBE_JDBC_USERNAME=sonar
+        #    - SONARQUBE_JDBC_PASSWORD=sonar
+        #    - SONARQUBE_JDBC_URL=jdbc:postgresql://database:5432/sonar
+        volumes:
+            - sq_config:/opt/sonarqube/conf
+            - sq_data:/opt/sonarqube/data
+            - sq_extensions:/opt/sonarqube/extensions
+            - sq_plugins:/opt/sonarqube/lib/bundled-plugins
+        env_file:
+            - sonarqube.env
+        networks:
+            - devnet
+        depends_on:
+            - database
+        links:
+            - database
+    jenkins:
+        image: jenkins/jenkins
+        container_name: server_jenkins
+        hostname: server_jenkins
+        restart: always
+        ports:
+            - 8080:8080
+        environment:
+            - JENKINS_HOST_HOME=/data/jenkins
+        volumes:
+            - jk_data:/jenkins_config
+            #- ./jenkins_home:/var/jenkins_home
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - devnet
+    nexus:
+        image: sonatype/nexus3:latest
+        container_name: server_nexus
+        hostname: server_nexus
+        restart: always
+        ports:
+            - 8081:8081
+        volumes:
+            - nx_data:/nexus-data        
+    nginx:
+        image: nginx:alpine
+        container_name: server_nginx
+        hostname: server-nginx
+        restart: always
+        ports:
+            - 80:80            
+            - 443:443
+        volumes:
+            - ./nginx/conf.d:/etc/nginx/conf.d
+        depends_on:
+            - sonarqube
+            - jenkins
+            - nexus
+        links:
+            - sonarqube
+            - jenkins
+            - nexus
+        networks:
+            - devnet
+                                
+volumes:
+    postgres:
+    db_data:
+    sq_config:
+    sq_data:
+    sq_extensions:
+    sq_plugins:
+    jk_data:
+    nx_data:
+
+networks:
+    devnet:
+        driver: bridge
