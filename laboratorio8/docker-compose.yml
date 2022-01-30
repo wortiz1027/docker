@@ -1,4 +1,5 @@
  
+ 
 # -------------------------------------------------------------------
 # - DOCKER COMPOSE FILE
 # - AUTOR: wortiz
@@ -53,4 +54,4 @@ volumes:
 
 networks:
   ntw_keycloak:
-    external: true      
+    external: true
