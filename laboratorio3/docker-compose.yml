@@ -1,4 +1,10 @@
-version: '3.7'
+# Ejecutar los siguientes comandos
+# sysctl -w vm.max_map_count=524288
+# sysctl -w fs.file-max=131072
+# ulimit -n 131072
+# ulimit -u 8192
+
+version: '3.9'
 services:
     database:
         image: postgres
@@ -6,94 +12,77 @@ services:
         hostname: server_sonar_postgres
         restart: unless-stopped
         environment:
-            - POSTGRES_USER=sonar
-            - POSTGRES_PASSWORD=sonar
-            - POSTGRES_DB=sonar
+            - POSTGRES_USER=${KEY_POSTGRES_USERNAME}
+            - POSTGRES_PASSWORD=${KEY_POSTGRES_PASSWORD}
+            - POSTGRES_DB=${KEY_POSTGRES_DB}
         volumes:
-            - postgres:/var/lib/postgres
-            - db_data:/var/lib/postgres/data
+            - postgresql:/var/lib/postgresql
+            - postgresql_data:/var/lib/postgresql/data
         networks:
-            - devnet
+            - ntw_devops
     sonarqube:
-        image: sonarqube:lts
+        image: sonarqube:9.3.0-community
         container_name: server_sonarqube
         hostname: server_sonarqube
         restart: unless-stopped
         ports:
             - 9000:9000
             - 9092:9092
-        #environment:
-        #    - SONARQUBE_JDBC_USERNAME=sonar
-        #    - SONARQUBE_JDBC_PASSWORD=sonar
-        #    - SONARQUBE_JDBC_URL=jdbc:postgresql://database:5432/sonar
         volumes:
             - sq_config:/opt/sonarqube/conf
             - sq_data:/opt/sonarqube/data
             - sq_extensions:/opt/sonarqube/extensions
             - sq_plugins:/opt/sonarqube/lib/bundled-plugins
-        env_file:
-            - sonarqube.env
+            - sq_logs:/opt/sonarqube/logs
+        environment:
+            - SONARQUBE_JDBC_USERNAME=${KEY_POSTGRES_USERNAME}
+            - SONARQUBE_JDBC_PASSWORD=${KEY_POSTGRES_PASSWORD}
+            - SONARQUBE_JDBC_URL=${KEY_SONAR_JDBC_URL}
         networks:
-            - devnet
+            - ntw_devops
         depends_on:
-            - database
-        links:
             - database
     jenkins:
         image: jenkins/jenkins
         container_name: server_jenkins
         hostname: server_jenkins
         restart: always
+        privileged: true
+        tty: true
+        user: root
         ports:
-            - 8080:8080
+            - 8180:8080
+            - 50000:50000
         environment:
             - JENKINS_HOST_HOME=/data/jenkins
         volumes:
-            - jk_data:/jenkins_config
-            #- ./jenkins_home:/var/jenkins_home
+            - ./jenkins_home:/var/jenkins_home
+            - /usr/bin/docker:/usr/bin/docker
             - /var/run/docker.sock:/var/run/docker.sock
         networks:
-            - devnet
+            - ntw_devops
     nexus:
         image: sonatype/nexus3:latest
         container_name: server_nexus
         hostname: server_nexus
         restart: always
         ports:
-            - 8081:8081
+            - 8280:8081
+            - 5000:5000
         volumes:
-            - nx_data:/nexus-data        
-    nginx:
-        image: nginx:alpine
-        container_name: server_nginx
-        hostname: server-nginx
-        restart: always
-        ports:
-            - 80:80            
-            - 443:443
-        volumes:
-            - ./nginx/conf.d:/etc/nginx/conf.d
-        depends_on:
-            - sonarqube
-            - jenkins
-            - nexus
-        links:
-            - sonarqube
-            - jenkins
-            - nexus
-        networks:
-            - devnet
-                                
+            - nx_data:/nexus-data
+
 volumes:
-    postgres:
-    db_data:
+    postgresql:
+    postgresql_data:
     sq_config:
     sq_data:
     sq_extensions:
     sq_plugins:
+    sq_logs:
     jk_data:
     nx_data:
 
 networks:
-    devnet:
+    ntw_devops:
         driver: bridge
