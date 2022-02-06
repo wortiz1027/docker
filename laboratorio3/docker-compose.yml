@@ -1,4 +1,4 @@
-# Ejecutar los siguientes comandos
+# Ejecutar los siguientes comandos en el host huesped para el correcto funcionamiento de sonarqube
 # sysctl -w vm.max_map_count=524288
 # sysctl -w fs.file-max=131072
 # ulimit -n 131072
@@ -69,6 +69,8 @@ services:
         ports:
             - 8280:8081
             - 5000:5000
+            - 5001:5001
+            - 5002:5002
         volumes:
             - nx_data:/nexus-data
 
