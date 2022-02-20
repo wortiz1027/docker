@@ -24,7 +24,7 @@ services:
       MYSQL_PASSWORD: ${KEY_MYSQL_PASSWORD}
       MYSQL_ROOT_HOST: '%'
     ports:
-      - '33062:3306'
+      - 33062:3306
     volumes:
       - MYSQL_DATA_KEYCLOAK:/var/lib/mysql
     networks:
@@ -44,11 +44,22 @@ services:
       DB_PASSWORD: ${KEY_MYSQL_PASSWORD}
       KEYCLOAK_USER: ${KEY_KEYCLOAK_USERNAME}
       KEYCLOAK_PASSWORD: ${KEY_KEYCLOAK_PASSWORD}
+      PROXY_ADDRESS_FORWARDING: ${KEY_PROXY_ADDRESS_FORWARDING}
     ports:
-      - '28080:8080'
+      - 28080:8080
     networks:
       - ntw_keycloak
-
+  nginx:
+    image: nginx:latest
+    container_name: sv_nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./www:/data/www
+    ports:
+      - 80:80
+    networks:
+      - ntw_keycloak
 volumes:
   MYSQL_DATA_KEYCLOAK:
 

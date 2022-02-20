@@ -23,7 +23,7 @@ services:
     ports:
       - '33060:3306'
     volumes:
-      - ./scripts/employees.sql:/docker-entrypoint-initdb.d/employees.sql
+      - ./scripts/employees_01.sql:/docker-entrypoint-initdb.d/employees.sql
       - MYSQL_DATA_DEV:/var/lib/mysql
     networks:
       - ntw_development
@@ -41,7 +41,7 @@ services:
     ports:
       - '33061:3306'
     volumes:
-      - ./scripts/employees.sql:/docker-entrypoint-initdb.d/employees.sql
+      - ./scripts/employees_01.sql:/docker-entrypoint-initdb.d/employees.sql
       - MYSQL_DATA_PRD:/var/lib/mysql
     networks:
       - ntw_development
